@@ -11,47 +11,66 @@ import os
 from app import app, db
 from app.models import Movie
 from app.forms import MovieForm
+from flask_wtf.csrf import generate_csrf
 
 
 ###
 # Routing for your application.
 ###
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    """Check if the file has an allowed extension"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def index():
     return jsonify(message="This is the beginning of our API")
 
+@app.route('/api/v1/csrf-token', methods=['GET'])
+def get_csrf():
+    return jsonify({'csrf_token': generate_csrf()})
+
 @app.route('/api/v1/movies', methods=['POST'])
 def movies():
-    form = MovieForm()
+    # Ensure the 'uploads' folder exists
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-    if form.validate_on_submit():
-        # Get form data
-        title = form.title.data
-        description = form.description.data
-        poster = form.poster.data
+    # Get form data and file
+    title = request.form.get('title')
+    description = request.form.get('description')
+    poster = request.files.get('poster')
 
-        # Save file to upload folder
-        filename = secure_filename(poster.filename)
-        upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        poster.save(upload_path)
+    print("FILES:", request.files)
+    print("FORM:", request.form)
 
-        # Save to DB
-        movie = Movie(title=title, description=description, poster=filename)
-        db.session.add(movie)
-        db.session.commit()
+    # Validate required fields
+    if not title or not description or not poster:
+        return jsonify({"error": "Missing fields"}), 400
 
-        # Return success JSON
-        return jsonify({
-            "message": "Movie Successfully added",
-            "title": title,
-            "poster": filename,
-            "description": description
-        }), 201
+    # Validate file type
+    if not allowed_file(poster.filename):
+        return jsonify({"error": "File type not allowed"}), 400
 
-    else:
-        # Return errors in JSON if validation fails
-        return jsonify({"errors": form_errors(form)}), 400
+    # Secure the filename and set the upload path
+    filename = secure_filename(poster.filename)
+    upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    print("Uploading to:", upload_path)
+    poster.save(upload_path)
+
+    # Create and save the movie entry to the database
+    movie = Movie(title=title, description=description, poster=filename)
+    db.session.add(movie)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Movie successfully added",
+        "title": title,
+        "poster": filename,
+        "description": description
+    }), 201
+
+
 ###
 # The functions below should be applicable to all Flask apps.
 ###
