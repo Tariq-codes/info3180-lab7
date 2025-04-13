@@ -70,6 +70,23 @@ def movies():
         "description": description
     }), 201
 
+@app.route('/api/v1/movies', methods=['GET'])
+def get_movies():
+    movies = Movie.query.all()
+    movie_list = [{
+        "id": movie.id,
+        "title": movie.title,
+        "description": movie.description,
+        "poster": f"/api/v1/posters/{movie.poster}"
+    } for movie in movies]
+
+    return jsonify({"movies": movie_list})
+from flask import send_from_directory
+
+@app.route('/api/v1/posters/<filename>')
+def get_poster(filename):
+    uploads_path = os.path.join(os.getcwd(), 'uploads')
+    return send_from_directory(uploads_path, filename)
 
 ###
 # The functions below should be applicable to all Flask apps.

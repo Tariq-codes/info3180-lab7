@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="container py-4" style="max-width: 600px; margin: 0 auto;">
     <!-- Success message -->
     <p v-if="successMessage" class="alert alert-success">
       {{ successMessage }}
@@ -12,23 +12,25 @@
       </ul>
     </div>
 
-    <form id="movieForm" @submit.prevent="saveMovie">
+    <form id="movieForm" @submit.prevent="saveMovie" class="border p-4 rounded shadow-sm bg-white">
       <div class="form-group mb-3">
-        <label for="title" class="form-label">Movie Title</label>
+        <label for="title" class="form-label fw-bold">Movie Title</label>
         <input type="text" name="title" v-model="title" class="form-control" required />
       </div>
 
       <div class="form-group mb-3">
-        <label for="description" class="form-label">Movie Description</label>
-        <textarea name="description" v-model="description" class="form-control" required></textarea>
+        <label for="description" class="form-label fw-bold">Movie Description</label>
+        <textarea name="description" v-model="description" class="form-control" rows="4" required></textarea>
       </div>
 
-      <div class="form-group mb-3">
-        <label for="poster" class="form-label">Poster</label>
+      <div class="form-group mb-4">
+        <label for="poster" class="form-label fw-bold">Poster</label>
         <input type="file" name="poster" @change="handleFileChange" class="form-control" accept="image/*" required />
       </div>
 
-      <button type="submit" class="btn btn-primary">Submit</button>
+      <div class="d-grid">
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
     </form>
   </div>
 </template>
